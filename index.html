@@ -121,9 +121,9 @@
         </article>
         <article>
           <h2>MATERI PERLU DIREVIEW</h2>
-          <div class="review-add">
+          <div class="review-controls">
             <select id="reviewPicker"></select>
-            <button onclick="addReviewMaterial()">+ Tambah Review</button>
+            <button onclick="addReviewMaterial()">+ Tambah ke Review</button>
           </div>
           <div id="reviewList"></div>
         </article>
@@ -143,10 +143,10 @@
         <div class="chat">
           <h3>LECTURER AI <span>BETA</span></h3>
           <div id="aiMessages">
-            <p class="bot">Halo! Tanyakan materi dari catatanmu, misalnya: “jelaskan jurnal penyesuaian” atau “apa itu aset lancar”.</p>
+            <p class="bot">Halo! Tanyakan materi dari catatanmu. Contoh: jelaskan siklus akuntansi.</p>
           </div>
-          <div class="ai-form">
-            <input id="aiInput" placeholder="Ketik pertanyaan tentang materimu..." />
+          <div class="ai-input-row">
+            <input id="aiQuestion" placeholder="Ketik pertanyaan materi..." />
             <button onclick="askLecturerAI()">Kirim</button>
           </div>
         </div>
@@ -157,7 +157,7 @@
           <h2>EKSPOR CATATAN</h2>
           <label class="export-label">Pilih materi yang mau diunduh</label>
           <select id="exportNotePicker"></select>
-          <button onclick="downloadSelectedNote()">Unduh Materi Terpilih (.txt)</button>
+          <button onclick="downloadSelectedNote()">Unduh Materi Pilihan (.txt)</button>
           <button onclick="downloadRekap()">Unduh Rekap (.txt)</button>
           <button onclick="window.print()">Cetak / Simpan sebagai PDF</button>
         </div>
