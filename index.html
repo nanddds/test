@@ -7,136 +7,157 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="navbar">
-    <div class="brand">
-      <div class="logo">📖</div>
-      <div>
-        <h1>LECTURER COMPANION</h1>
-        <p>Catatan & Rekap Materi</p>
-      </div>
+  <section id="loginPage" class="login-page">
+    <div class="login-panel">
+      <div class="login-illustration">📖</div>
+      <h1>LECTURER COMPANION</h1>
+      <p class="login-subtitle">Masuk dulu untuk mengakses dashboard, catatan, rekap otomatis, jadwal belajar, pencarian materi, dan ekspor file.</p>
+      <label>Username</label>
+      <input id="loginUsername" placeholder="Masukkan username" autocomplete="username" />
+      <label>Password</label>
+      <input id="loginPassword" type="password" placeholder="Masukkan password" autocomplete="current-password" />
+      <button onclick="loginFromPage()">Masuk</button>
+      <p id="pageLoginInfo" class="demo-info">Akun demo: <b>mahasiswa</b> | Password: <b>123456</b></p>
     </div>
-    <nav>
-      <a href="#beranda">Beranda</a>
-      <a href="#catatan">Catatan</a>
-      <a href="#rekap">Rekap</a>
-      <a href="#jadwal">Jadwal</a>
-      <a href="#cari">Cari Materi</a>
-      <button onclick="openLogin()">Login</button>
-    </nav>
-  </header>
+  </section>
 
-  <main>
-    <section id="beranda" class="hero">
-      <div class="hero-text">
-        <p class="welcome">Welcome, Mahasiswa!</p>
-        <h2>Catat, Pahami,<br>Kuasai.</h2>
-        <p>Catatan rapi. Rekap otomatis. Belajar jadi lebih terarah.</p>
-        <div class="hero-actions">
-          <a href="#catatan">Mulai Catat</a>
-          <a href="#rekap">Lihat Rekap</a>
+  <div id="appShell" class="app-shell">
+    <header class="navbar">
+      <div class="brand">
+        <div class="logo">📖</div>
+        <div>
+          <h1>LECTURER COMPANION</h1>
+          <p>Catatan & Rekap Materi</p>
         </div>
       </div>
-      <div class="hero-img">👩‍💻📚</div>
-    </section>
+      <nav>
+        <a href="#beranda">Beranda</a>
+        <a href="#catatan">Catatan</a>
+        <a href="#rekap">Rekap</a>
+        <a href="#jadwal">Jadwal</a>
+        <a href="#cari">Cari Materi</a>
+        <a href="#ekspor">Ekspor</a>
+        <button onclick="logout()">Logout</button>
+      </nav>
+    </header>
 
-    <section class="features">
-      <article>📝<h3>Catatan Materi</h3><p>Catat dengan cepat dan terstruktur.</p></article>
-      <article>📋<h3>Rekap Otomatis</h3><p>Ringkasan materi siap belajar.</p></article>
-      <article>🔎<h3>Cari Materi</h3><p>Temukan catatan dengan mudah.</p></article>
-      <article>📄<h3>Ekspor PDF</h3><p>Unduh catatan dan rekap.</p></article>
-      <article>🔐<h3>Sinkron & Aman</h3><p>Akses di semua perangkat.</p></article>
-    </section>
-
-    <section id="catatan" class="panel note-section">
-      <aside>
-        <button class="add" onclick="newNote()">+ Catatan Baru</button>
-        <p>📄 Semua Catatan <b>24</b></p>
-        <p>♡ Favorit <b>5</b></p>
-        <p>🗑 Sampah</p>
-        <h4>MATA KULIAH</h4>
-        <ul>
-          <li>Akuntansi Keuangan</li>
-          <li>Perpajakan</li>
-          <li>Bahasa Indonesia</li>
-          <li>Kewarganegaraan</li>
-          <li>Matematika Bisnis</li>
-        </ul>
-      </aside>
-      <div class="editor">
-        <input type="search" placeholder="Cari di catatan..." />
-        <h2>Akuntansi Keuangan - Pertemuan 3</h2>
-        <p class="date">12 Oktober 2024 - 10.30</p>
-        <textarea id="noteBox">Persamaan Dasar Akuntansi\n\nAset = Liabilitas + Ekuitas\n\nContoh:\n• Kas bertambah Rp10.000 - Aset naik\n• Utang bertambah Rp10.000 - Liabilitas naik\n\n#DasarAkuntansi\n\nPertanyaan:\nBedanya Aset Lancar & Tidak Lancar</textarea>
-        <p class="saved">Tersimpan otomatis</p>
-      </div>
-    </section>
-
-    <section id="rekap" class="panel rekap-section">
-      <div class="section-title">
-        <h2>REKAP MATERI</h2>
-        <select><option>Akuntansi Keuangan</option><option>Perpajakan</option></select>
-        <button onclick="generateRekap()">Generate Rekap</button>
-      </div>
-      <div class="rekap-content">
-        <div class="meetings">
-          <p>Pertemuan 1<br><span>Pengantar Akuntansi</span></p>
-          <p>Pertemuan 2<br><span>Persamaan Dasar Akuntansi</span></p>
-          <p class="active">Pertemuan 3<br><span>Siklus Akuntansi</span></p>
-          <p>Pertemuan 4<br><span>Jurnal Penyesuaian</span></p>
+    <main>
+      <section id="beranda" class="hero">
+        <div class="hero-text">
+          <p class="welcome">Welcome, Mahasiswa!</p>
+          <h2>Catat, Pahami,<br>Kuasai.</h2>
+          <p>Catatan rapi. Rekap otomatis. Belajar jadi lebih terarah.</p>
+          <div class="hero-actions">
+            <a href="#catatan">Mulai Catat</a>
+            <a href="#rekap">Lihat Rekap</a>
+          </div>
         </div>
+        <div class="hero-img">👩‍💻📚</div>
+      </section>
+
+      <section class="features">
+        <article>📝<h3>Catatan Materi</h3><p>Buat, simpan, edit, dan hapus catatan.</p></article>
+        <article>📋<h3>Rekap Otomatis</h3><p>Ringkasan dibuat dari isi catatan.</p></article>
+        <article>🔎<h3>Cari Materi</h3><p>Cari kata kunci dari semua catatan.</p></article>
+        <article>📅<h3>Jadwal</h3><p>Tambah jadwal review dan ujian.</p></article>
+        <article>📄<h3>Ekspor</h3><p>Unduh catatan atau rekap.</p></article>
+      </section>
+
+      <section id="catatan" class="panel note-section">
+        <aside>
+          <button class="add" onclick="newNote()">+ Catatan Baru</button>
+          <p>📄 Semua Catatan <b id="noteCount">0</b></p>
+          <p>♡ Favorit <b id="favCount">0</b></p>
+          <h4>MATA KULIAH</h4>
+          <ul id="courseList"></ul>
+          <button class="secondary" onclick="toggleFavorite()">Tandai Favorit</button>
+          <button class="danger" onclick="deleteNote()">Hapus Catatan</button>
+        </aside>
+        <div class="editor">
+          <input id="noteSearchTop" type="search" placeholder="Cari di catatan..." oninput="renderNotes()" />
+          <div class="note-row">
+            <select id="notePicker" onchange="selectNote(this.value)"></select>
+            <input id="noteCourse" placeholder="Mata kuliah" />
+          </div>
+          <input id="noteTitle" class="title-input" placeholder="Judul catatan" />
+          <textarea id="noteBox" placeholder="Tulis materi kuliah di sini..."></textarea>
+          <div class="editor-actions">
+            <button onclick="saveNote()">Simpan Catatan</button>
+            <span id="saveStatus" class="saved">Belum ada perubahan</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="rekap" class="panel rekap-section">
+        <div class="section-title">
+          <h2>REKAP MATERI</h2>
+          <select id="rekapCourse"></select>
+          <button onclick="generateRekap()">Generate Rekap</button>
+        </div>
+        <div class="rekap-content">
+          <div class="meetings" id="meetingList"></div>
+          <article>
+            <h3 id="rekapTitle">REKAP: -</h3>
+            <div id="rekapOutput">Pilih mata kuliah, lalu klik Generate Rekap.</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="jadwal" class="dashboard">
         <article>
-          <h3>REKAP: SIKLUS AKUNTANSI</h3>
-          <ol>
-            <li><b>Transaksi</b><br>Peristiwa ekonomi yang mempengaruhi keuangan perusahaan.</li>
-            <li><b>Jurnal</b><br>Pencatatan pertama transaksi ke dalam jurnal umum.</li>
-            <li><b>Buku Besar</b><br>Pengelompokan akun berdasarkan jenisnya.</li>
-            <li><b>Neraca Saldo</b><br>Daftar saldo semua akun sebelum penyesuaian.</li>
-            <li><b>Jurnal Penyesuaian</b><br>Penyesuaian di akhir periode.</li>
-          </ol>
-          <p class="inti">Inti: Siklus akuntansi memastikan laporan keuangan akurat.</p>
+          <h2>PROGRES BELAJAR</h2>
+          <div class="progress" id="progressNumber">0%</div>
+          <p id="progressText">0 Catatan • 0 Rekap • 0 Mata Kuliah</p>
         </article>
-      </div>
-    </section>
+        <article>
+          <h2>JADWAL TERDEKAT</h2>
+          <div class="schedule-form">
+            <input id="scheduleDate" type="date" />
+            <input id="scheduleTime" type="time" />
+            <input id="scheduleTitle" placeholder="Contoh: Review Akuntansi Keuangan" />
+            <button onclick="addSchedule()">Tambah Jadwal</button>
+          </div>
+          <div id="scheduleList"></div>
+        </article>
+        <article>
+          <h2>MATERI PERLU DIREVIEW</h2>
+          <div id="reviewList"></div>
+        </article>
+        <article>
+          <h2>TIPS BELAJAR</h2>
+          <p>Review catatan secara rutin dan buat ringkasan singkat setelah perkuliahan.</p>
+        </article>
+      </section>
 
-    <section id="jadwal" class="dashboard">
-      <article><h2>PROGRES BELAJAR</h2><div class="progress">67%</div><p>24 Catatan • 12 Rekap • 5 Mata Kuliah</p></article>
-      <article><h2>JADWAL TERDEKAT</h2><p><b>Besok, 08:00</b><br>Akuntansi Keuangan<br>Pertemuan 4</p><p><b>14 Nov, 10:00</b><br>Audit<br>UTS</p></article>
-      <article><h2>MATERI PERLU DIREVIEW</h2><p>Perpajakan - Pertemuan 2</p><p>Sistem Informasi - Pertemuan 1</p></article>
-      <article><h2>TIPS BELAJAR</h2><p>Review catatan secara rutin bantu ingat lebih lama.</p></article>
-    </section>
+      <section id="cari" class="panel search-section">
+        <div>
+          <h2>CARI MATERI</h2>
+          <input id="searchInput" placeholder="Contoh: aset lancar" />
+          <button onclick="searchMaterial()">Cari</button>
+          <div id="searchResult" class="result">Masukkan kata kunci untuk mencari isi catatan.</div>
+        </div>
+        <div class="chat">
+          <h3>LECTURER AI <span>BETA</span></h3>
+          <p class="user">jelaskan jurnal penyesuaian dengan contohnya dong</p>
+          <p class="bot">Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan akun agar saldo menunjukkan kondisi sebenarnya.</p>
+          <p class="bot">Contoh: beban gaji sudah terjadi tetapi belum dibayar, maka dicatat Beban Gaji pada sisi debit dan Utang Gaji pada sisi kredit.</p>
+        </div>
+      </section>
 
-    <section id="cari" class="panel search-section">
-      <div>
-        <h2>CARI MATERI</h2>
-        <input id="searchInput" type="text" value="perbedaan aset lancar" />
-        <button onclick="searchMaterial()">Cari</button>
-        <div id="searchResult" class="result"><b>Akuntansi Keuangan</b><br>Aset lancar adalah aset yang dapat dicairkan dalam waktu kurang dari 1 tahun.</div>
-      </div>
-      <div class="chat">
-        <h3>LECTURER AI <span>BETA</span></h3>
-        <p class="bot">Halo! Ada yang ingin kamu tanyakan tentang materimu?</p>
-        <p class="user">jelaskan jurnal penyesuaian dengan contohnya dong</p>
-        <p class="bot">Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan akun.</p>
-      </div>
-    </section>
-
-    <section class="panel export-section">
-      <div><h2>EKSPOR CATATAN</h2><button onclick="downloadText()">PDF</button><button>Word (.docx)</button><button>Ringkasan</button><button>Catatan Mentah</button></div>
-      <div class="preview"><h2>PREVIEW</h2><h3>REKAP MATERI</h3><p>Akuntansi Keuangan<br>pertemuan 1 - 4</p><hr><b>Persamaan Dasar Akuntansi</b><p>Aset = Liabilitas + Ekuitas</p><b>Siklus Akuntansi</b><ol><li>Transaksi</li><li>Jurnal</li><li>Buku Besar</li><li>Neraca Saldo</li><li>Jurnal Penyesuaian</li></ol><button onclick="downloadText()">Unduh Sekarang</button></div>
-    </section>
-  </main>
-
-  <div id="loginModal" class="modal">
-    <div class="login-card">
-      <button class="close" onclick="closeLogin()">×</button>
-      <h2>Login</h2>
-      <input id="username" placeholder="Username" />
-      <input id="password" type="password" placeholder="Password" />
-      <button onclick="login()">Masuk</button>
-      <p id="loginInfo">Akun demo: mahasiswa | Password: 123456</p>
-    </div>
+      <section id="ekspor" class="panel export-section">
+        <div>
+          <h2>EKSPOR CATATAN</h2>
+          <button onclick="downloadCurrentNote()">Unduh Catatan Aktif (.txt)</button>
+          <button onclick="downloadRekap()">Unduh Rekap (.txt)</button>
+          <button onclick="window.print()">Cetak / Simpan sebagai PDF</button>
+        </div>
+        <div class="preview">
+          <h2>PREVIEW REKAP MATERI</h2>
+          <pre id="exportPreview">Belum ada rekap. Klik Generate Rekap dulu.</pre>
+        </div>
+      </section>
+    </main>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
