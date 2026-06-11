@@ -10,7 +10,8 @@ let state = {
     {date:'2026-06-12', time:'08:00', title:'Review Akuntansi Keuangan'},
     {date:'2026-06-14', time:'10:00', title:'Latihan Perpajakan'}
   ],
-  lastRekap: ''
+  lastRekap: '',
+  reviewIds: [1, 3]
 };
 
 function loadData(){
@@ -18,7 +19,9 @@ function loadData(){
   if(saved){
     try{ state = JSON.parse(saved); }catch(e){}
   }
+  if(!Array.isArray(state.reviewIds)) state.reviewIds = state.notes.slice(-2).map(n=>n.id);
 }
+
 function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function courses(){ return [...new Set(state.notes.map(n => n.course).filter(Boolean))]; }
 function activeNote(){ return state.notes.find(n => n.id == state.activeNoteId) || state.notes[0]; }
@@ -50,7 +53,7 @@ function logout(){
   document.getElementById('pageLoginInfo').innerHTML='Akun demo: <b>mahasiswa</b> | Password: <b>123456</b>';
 }
 
-function renderAll(){ renderNotes(); renderCourses(); renderRekapOptions(); renderSchedules(); renderProgress(); }
+function renderAll(){ renderNotes(); renderCourses(); renderRekapOptions(); renderSchedules(); renderReviewPicker(); renderExportOptions(); renderProgress(); }
 function renderNotes(){
   const q = (document.getElementById('noteSearchTop')?.value || '').toLowerCase();
   const picker = document.getElementById('notePicker');
@@ -87,9 +90,32 @@ function renderSchedules(){
   const box = document.getElementById('scheduleList');
   const sorted = [...state.schedules].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   box.innerHTML = sorted.map((s,i)=>`<div class="schedule-item"><b>${s.date} ${s.time}</b><br>${s.title}<button onclick="removeSchedule('${s.date}','${s.time}','${s.title.replaceAll("'","&#39;")}')">Selesai</button></div>`).join('');
-  const review = document.getElementById('reviewList');
-  review.innerHTML = state.notes.slice(-3).reverse().map(n=>`<p>${n.course} - ${n.title}<br><span>Terakhir diperbarui ${n.updated}</span></p>`).join('');
+  renderReviewList();
 }
+function renderReviewPicker(){
+  const picker = document.getElementById('reviewPicker');
+  if(!picker) return;
+  const available = state.notes.filter(n => !state.reviewIds.includes(n.id));
+  picker.innerHTML = available.map(n=>`<option value="${n.id}">${n.course} - ${n.title}</option>`).join('') || '<option value="">Semua materi sudah masuk review</option>';
+}
+function renderReviewList(){
+  const review = document.getElementById('reviewList');
+  if(!review) return;
+  const items = state.reviewIds.map(id => state.notes.find(n=>n.id==id)).filter(Boolean);
+  review.innerHTML = items.map(n=>`<label class="review-item"><input type="checkbox" onchange="finishReview(${n.id})" /> <span><b>${n.course} - ${n.title}</b><br>Terakhir diperbarui ${n.updated}</span></label>`).join('') || '<p class="empty-review">Tidak ada materi yang perlu direview.</p>';
+}
+function addReviewMaterial(){
+  const picker = document.getElementById('reviewPicker');
+  const id = Number(picker.value);
+  if(!id) return;
+  if(!state.reviewIds.includes(id)) state.reviewIds.push(id);
+  persist(); renderReviewPicker(); renderReviewList();
+}
+function finishReview(id){
+  state.reviewIds = state.reviewIds.filter(x => x !== id);
+  persist(); renderReviewPicker(); renderReviewList();
+}
+
 function renderProgress(){
   const courseCount = courses().length;
   const percent = Math.min(100, Math.round((state.notes.length * 18) + (state.schedules.length * 5)));
@@ -137,13 +163,58 @@ function keywords(text){
 function generateRekap(){
   const course = document.getElementById('rekapCourse').value;
   const notes = state.notes.filter(n=>n.course===course);
-  const combined = notes.map(n=>`${n.title}. ${n.content}`).join('\n');
-  const points = summarize(combined);
-  const key = keywords(combined);
-  const html = `<p class="inti"><b>Inti:</b> ${points[0] || 'Belum ada isi catatan.'}</p><ol>${points.map(p=>`<li>${p}</li>`).join('')}</ol><h4>KATA KUNCI</h4><p>${key.map(k=>'#'+k).join(' ') || '-'}</p>`;
+  const hasSiklus = notes.some(n => (n.title+n.content).toLowerCase().includes('siklus akuntansi'));
+  let html = '';
+  if(course === 'Akuntansi Keuangan' && hasSiklus){
+    html = `<p class="inti"><b>Inti:</b> Siklus akuntansi adalah tahapan pencatatan transaksi sampai menjadi laporan keuangan.</p>
+      <h4>Pertemuan 1 - Persamaan Dasar Akuntansi</h4>
+      <ol>
+        <li>Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.</li>
+        <li>Contoh: kas bertambah Rp10.000 maka aset naik, sedangkan utang bertambah Rp10.000 maka liabilitas naik.</li>
+      </ol>
+      <h4>Pertemuan 2 - Siklus Akuntansi</h4>
+      <ol>
+        <li>Transaksi adalah peristiwa ekonomi yang memengaruhi kondisi keuangan perusahaan.</li>
+        <li>Jurnal digunakan sebagai pencatatan pertama sebelum data dipindahkan ke buku besar.</li>
+        <li>Buku besar mengelompokkan akun berdasarkan jenisnya agar saldo setiap akun lebih mudah diketahui.</li>
+        <li>Neraca saldo berisi daftar saldo akun sebelum dilakukan penyesuaian.</li>
+        <li>Jurnal penyesuaian dibuat pada akhir periode agar akun menunjukkan kondisi yang sebenarnya.</li>
+      </ol>
+      <h4>KATA KUNCI</h4><p>#transaksi #jurnal #buku-besar #neraca-saldo #penyesuaian</p>`;
+    state.lastRekap = `REKAP: ${course}
+
+Inti: Siklus akuntansi adalah tahapan pencatatan transaksi sampai menjadi laporan keuangan.
+
+Pertemuan 1 - Persamaan Dasar Akuntansi
+1. Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.
+2. Contoh: kas bertambah Rp10.000 maka aset naik, sedangkan utang bertambah Rp10.000 maka liabilitas naik.
+
+Pertemuan 2 - Siklus Akuntansi
+1. Transaksi adalah peristiwa ekonomi yang memengaruhi kondisi keuangan perusahaan.
+2. Jurnal digunakan sebagai pencatatan pertama sebelum data dipindahkan ke buku besar.
+3. Buku besar mengelompokkan akun berdasarkan jenisnya agar saldo setiap akun lebih mudah diketahui.
+4. Neraca saldo berisi daftar saldo akun sebelum dilakukan penyesuaian.
+5. Jurnal penyesuaian dibuat pada akhir periode agar akun menunjukkan kondisi yang sebenarnya.
+
+Kata kunci: transaksi, jurnal, buku besar, neraca saldo, penyesuaian`;
+  }else{
+    const combined = notes.map(n=>`${n.title}. ${n.content}`).join('
+');
+    const points = summarize(combined);
+    const key = keywords(combined);
+    html = `<p class="inti"><b>Inti:</b> ${points[0] || 'Belum ada isi catatan.'}</p><ol>${points.map(p=>`<li>${p}</li>`).join('')}</ol><h4>KATA KUNCI</h4><p>${key.map(k=>'#'+k).join(' ') || '-'}</p>`;
+    state.lastRekap = `REKAP: ${course}
+
+Inti: ${points[0] || '-'}
+
+Poin penting:
+${points.map((p,i)=>`${i+1}. ${p}`).join('
+')}
+
+Kata kunci: ${key.join(', ')}`;
+  }
   document.getElementById('rekapTitle').textContent = 'REKAP: ' + course.toUpperCase();
   document.getElementById('rekapOutput').innerHTML = html;
-  state.lastRekap = `REKAP: ${course}\n\nInti: ${points[0] || '-'}\n\nPoin penting:\n${points.map((p,i)=>`${i+1}. ${p}`).join('\n')}\n\nKata kunci: ${key.join(', ')}`;
   document.getElementById('exportPreview').textContent = state.lastRekap;
   persist(); renderProgress();
 }
@@ -168,18 +239,59 @@ function removeSchedule(date,time,title){
   state.schedules = state.schedules.filter(s => !(s.date===date && s.time===time && s.title===title));
   persist(); renderSchedules(); renderProgress();
 }
+function renderExportOptions(){
+  const picker = document.getElementById('exportNotePicker');
+  if(!picker) return;
+  picker.innerHTML = state.notes.map(n=>`<option value="${n.id}">${n.course} - ${n.title}</option>`).join('');
+  if(activeNote()) picker.value = activeNote().id;
+}
 function downloadFile(filename, content){
   const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
 }
-function downloadCurrentNote(){
-  const n = activeNote();
-  downloadFile('catatan-' + (n.title || 'materi').replace(/\s+/g,'-').toLowerCase() + '.txt', `${n.course}\n${n.title}\n\n${n.content}`);
+function downloadSelectedNote(){
+  const id = Number(document.getElementById('exportNotePicker')?.value || state.activeNoteId);
+  const n = state.notes.find(note => note.id === id) || activeNote();
+  downloadFile('catatan-' + (n.title || 'materi').replace(/\s+/g,'-').toLowerCase() + '.txt', `${n.course}
+${n.title}
+
+${n.content}`);
 }
+function downloadCurrentNote(){ downloadSelectedNote(); }
+
 function downloadRekap(){
   if(!state.lastRekap) generateRekap();
   downloadFile('rekap-materi.txt', state.lastRekap || 'Belum ada rekap.');
+}
+
+
+function askLecturerAI(){
+  const input = document.getElementById('aiInput');
+  const messages = document.getElementById('aiMessages');
+  const question = input.value.trim();
+  if(!question) return;
+  messages.innerHTML += `<p class="user">${escapeHtml(question)}</p>`;
+  const q = question.toLowerCase();
+  const matches = state.notes.filter(n => (n.title+' '+n.course+' '+n.content).toLowerCase().includes(q) || q.split(/\s+/).some(word => word.length > 4 && (n.title+' '+n.content).toLowerCase().includes(word)));
+  let answer = '';
+  if(matches.length){
+    const n = matches[0];
+    const summary = summarize(n.content).join(' ');
+    answer = `Berdasarkan catatan <b>${escapeHtml(n.course)} - ${escapeHtml(n.title)}</b>, ${escapeHtml(summary || n.content.slice(0,220))}`;
+  }else if(q.includes('jurnal penyesuaian')){
+    answer = 'Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan saldo akun agar sesuai dengan kondisi sebenarnya. Contoh: gaji sudah menjadi beban tetapi belum dibayar, maka dicatat Beban Gaji di debit dan Utang Gaji di kredit.';
+  }else if(q.includes('aset lancar')){
+    answer = 'Aset lancar adalah aset yang diperkirakan dapat dicairkan, digunakan, atau habis dalam waktu kurang dari satu tahun, seperti kas, piutang, dan persediaan.';
+  }else{
+    answer = 'Materi itu belum ditemukan di catatan. Coba gunakan kata kunci yang lebih spesifik, misalnya nama bab, akun, atau istilah akuntansi yang ada di catatan.';
+  }
+  messages.innerHTML += `<p class="bot">${answer}</p>`;
+  input.value = '';
+  messages.scrollTop = messages.scrollHeight;
+}
+function escapeHtml(text){
+  return String(text).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 }
 
 window.addEventListener('keydown', function(e){

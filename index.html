@@ -67,7 +67,7 @@
         <aside>
           <button class="add" onclick="newNote()">+ Catatan Baru</button>
           <p>📄 Semua Catatan <b id="noteCount">0</b></p>
-          <p>♡ Favorit <b id="favCount">0</b></p>
+          <p>★ Favorit <b id="favCount">0</b></p>
           <h4>MATA KULIAH</h4>
           <ul id="courseList"></ul>
           <button class="secondary" onclick="toggleFavorite()">Tandai Favorit</button>
@@ -121,6 +121,10 @@
         </article>
         <article>
           <h2>MATERI PERLU DIREVIEW</h2>
+          <div class="review-add">
+            <select id="reviewPicker"></select>
+            <button onclick="addReviewMaterial()">+ Tambah Review</button>
+          </div>
           <div id="reviewList"></div>
         </article>
         <article>
@@ -138,16 +142,22 @@
         </div>
         <div class="chat">
           <h3>LECTURER AI <span>BETA</span></h3>
-          <p class="user">jelaskan jurnal penyesuaian dengan contohnya dong</p>
-          <p class="bot">Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan akun agar saldo menunjukkan kondisi sebenarnya.</p>
-          <p class="bot">Contoh: beban gaji sudah terjadi tetapi belum dibayar, maka dicatat Beban Gaji pada sisi debit dan Utang Gaji pada sisi kredit.</p>
+          <div id="aiMessages">
+            <p class="bot">Halo! Tanyakan materi dari catatanmu, misalnya: “jelaskan jurnal penyesuaian” atau “apa itu aset lancar”.</p>
+          </div>
+          <div class="ai-form">
+            <input id="aiInput" placeholder="Ketik pertanyaan tentang materimu..." />
+            <button onclick="askLecturerAI()">Kirim</button>
+          </div>
         </div>
       </section>
 
       <section id="ekspor" class="panel export-section">
         <div>
           <h2>EKSPOR CATATAN</h2>
-          <button onclick="downloadCurrentNote()">Unduh Catatan Aktif (.txt)</button>
+          <label class="export-label">Pilih materi yang mau diunduh</label>
+          <select id="exportNotePicker"></select>
+          <button onclick="downloadSelectedNote()">Unduh Materi Terpilih (.txt)</button>
           <button onclick="downloadRekap()">Unduh Rekap (.txt)</button>
           <button onclick="window.print()">Cetak / Simpan sebagai PDF</button>
         </div>
