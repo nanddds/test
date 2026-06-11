@@ -11,7 +11,7 @@
     <div class="login-panel">
       <div class="login-illustration">📖</div>
       <h1>LECTURER COMPANION</h1>
-      <p class="login-subtitle">Masuk dulu untuk mengakses dashboard, catatan, rekap otomatis, jadwal belajar, pencarian materi, dan ekspor file.</p>
+      <p class="login-subtitle">Masuk untuk mengakses catatan, rekap materi, jadwal belajar, pencarian materi, dan ekspor catatan.</p>
       <label>Username</label>
       <input id="loginUsername" placeholder="Masukkan username" autocomplete="username" />
       <label>Password</label>
@@ -56,105 +56,109 @@
       </section>
 
       <section class="features">
-        <article>📝<h3>Catatan Materi</h3><p>Buat, simpan, edit, dan hapus catatan.</p></article>
-        <article>📋<h3>Rekap Otomatis</h3><p>Ringkasan dibuat dari isi catatan.</p></article>
-        <article>🔎<h3>Cari Materi</h3><p>Cari kata kunci dari semua catatan.</p></article>
-        <article>📅<h3>Jadwal</h3><p>Tambah jadwal review dan ujian.</p></article>
-        <article>📄<h3>Ekspor</h3><p>Unduh catatan atau rekap.</p></article>
+        <article>📝<h3>Catatan Materi</h3><p>Tambah, edit, favoritkan, dan hapus catatan.</p></article>
+        <article>📋<h3>Rekap Otomatis</h3><p>Ringkasan materi siap belajar.</p></article>
+        <article>🔎<h3>Cari Materi</h3><p>Temukan catatan dengan mudah.</p></article>
+        <article>📄<h3>Ekspor Catatan</h3><p>Pilih materi lalu unduh.</p></article>
+        <article>🤖<h3>Lecturer AI</h3><p>Asisten belajar berbasis materi lokal.</p></article>
       </section>
 
       <section id="catatan" class="panel note-section">
         <aside>
           <button class="add" onclick="newNote()">+ Catatan Baru</button>
-          <p>📄 Semua Catatan <b id="noteCount">0</b></p>
-          <p>♡ Favorit <b id="favCount">0</b></p>
+          <p>📄 Semua Catatan <b id="allCount">0</b></p>
+          <p>★ Favorit <b id="favCount">0</b></p>
+          <p>🗑 Sampah</p>
           <h4>MATA KULIAH</h4>
-          <ul id="courseList"></ul>
-          <button class="secondary" onclick="toggleFavorite()">Tandai Favorit</button>
-          <button class="danger" onclick="deleteNote()">Hapus Catatan</button>
+          <ul>
+            <li>Akuntansi Keuangan</li>
+            <li>Perpajakan</li>
+            <li>Bahasa Indonesia</li>
+            <li>Kewarganegaraan</li>
+            <li>Matematika Bisnis</li>
+          </ul>
         </aside>
         <div class="editor">
-          <input id="noteSearchTop" type="search" placeholder="Cari di catatan..." oninput="renderNotes()" />
-          <div class="note-row">
-            <select id="notePicker" onchange="selectNote(this.value)"></select>
-            <input id="noteCourse" placeholder="Mata kuliah" />
+          <div class="toolbar">
+            <input id="noteSearch" type="search" placeholder="Cari di catatan..." oninput="renderNoteList()" />
+            <select id="subjectInput">
+              <option>Akuntansi Keuangan</option>
+              <option>Perpajakan</option>
+              <option>Bahasa Indonesia</option>
+              <option>Kewarganegaraan</option>
+              <option>Matematika Bisnis</option>
+            </select>
           </div>
+          <div id="noteList" class="note-list"></div>
           <input id="noteTitle" class="title-input" placeholder="Judul catatan" />
-          <textarea id="noteBox" placeholder="Tulis materi kuliah di sini..."></textarea>
-          <div class="editor-actions">
+          <textarea id="noteBox"></textarea>
+          <div class="note-actions">
             <button onclick="saveNote()">Simpan Catatan</button>
-            <span id="saveStatus" class="saved">Belum ada perubahan</span>
+            <button class="secondary" onclick="toggleFavorite()" id="favBtn">★ Favorit</button>
+            <button class="danger" onclick="deleteNote()">Hapus</button>
           </div>
+          <p id="saveInfo" class="saved">Tersimpan otomatis</p>
         </div>
       </section>
 
       <section id="rekap" class="panel rekap-section">
         <div class="section-title">
           <h2>REKAP MATERI</h2>
-          <select id="rekapCourse"></select>
+          <select id="rekapSelect" onchange="showRekap()">
+            <option value="pengantar">Pertemuan 1 - Pengantar Akuntansi</option>
+            <option value="persamaan">Pertemuan 2 - Persamaan Dasar Akuntansi</option>
+            <option value="siklus" selected>Pertemuan 3 - Siklus Akuntansi</option>
+            <option value="penyesuaian">Pertemuan 4 - Jurnal Penyesuaian</option>
+          </select>
           <button onclick="generateRekap()">Generate Rekap</button>
         </div>
         <div class="rekap-content">
-          <div class="meetings" id="meetingList"></div>
-          <article>
-            <h3 id="rekapTitle">REKAP: -</h3>
-            <div id="rekapOutput">Pilih mata kuliah, lalu klik Generate Rekap.</div>
-          </article>
+          <div class="meetings">
+            <p onclick="selectRekap('pengantar')">Pertemuan 1<br><span>Pengantar Akuntansi</span></p>
+            <p onclick="selectRekap('persamaan')">Pertemuan 2<br><span>Persamaan Dasar Akuntansi</span></p>
+            <p onclick="selectRekap('siklus')" class="active">Pertemuan 3<br><span>Siklus Akuntansi</span></p>
+            <p onclick="selectRekap('penyesuaian')">Pertemuan 4<br><span>Jurnal Penyesuaian</span></p>
+          </div>
+          <article id="rekapOutput"></article>
         </div>
       </section>
 
       <section id="jadwal" class="dashboard">
-        <article>
-          <h2>PROGRES BELAJAR</h2>
-          <div class="progress" id="progressNumber">0%</div>
-          <p id="progressText">0 Catatan • 0 Rekap • 0 Mata Kuliah</p>
-        </article>
-        <article>
-          <h2>JADWAL TERDEKAT</h2>
-          <div class="schedule-form">
-            <input id="scheduleDate" type="date" />
-            <input id="scheduleTime" type="time" />
-            <input id="scheduleTitle" placeholder="Contoh: Review Akuntansi Keuangan" />
-            <button onclick="addSchedule()">Tambah Jadwal</button>
-          </div>
-          <div id="scheduleList"></div>
-        </article>
-        <article>
-          <h2>MATERI PERLU DIREVIEW</h2>
-          <div id="reviewList"></div>
-        </article>
-        <article>
-          <h2>TIPS BELAJAR</h2>
-          <p>Review catatan secara rutin dan buat ringkasan singkat setelah perkuliahan.</p>
-        </article>
+        <article><h2>PROGRES BELAJAR</h2><div class="progress">67%</div><p><span id="dashNotes">0</span> Catatan • 12 Rekap • 5 Mata Kuliah</p></article>
+        <article><h2>JADWAL TERDEKAT</h2><div id="scheduleList"></div><div class="schedule-form"><input id="scheduleDate" placeholder="Contoh: Besok, 08:00"><input id="scheduleTitle" placeholder="Contoh: Akuntansi Keuangan - Pertemuan 4"><button onclick="addSchedule()">Tambah Jadwal</button></div></article>
+        <article><h2>MATERI PERLU DIREVIEW</h2><div id="reviewList"></div><p class="hint">Centang materi yang sudah dikuasai agar otomatis hilang dari daftar review.</p></article>
+        <article><h2>TIPS BELAJAR</h2><p>Review catatan secara rutin bantu ingat lebih lama.</p></article>
       </section>
 
       <section id="cari" class="panel search-section">
         <div>
           <h2>CARI MATERI</h2>
-          <input id="searchInput" placeholder="Contoh: aset lancar" />
+          <input id="searchInput" type="text" value="perbedaan aset lancar" />
           <button onclick="searchMaterial()">Cari</button>
-          <div id="searchResult" class="result">Masukkan kata kunci untuk mencari isi catatan.</div>
+          <div id="searchResult" class="result"><b>Akuntansi Keuangan</b><br>Aset lancar adalah aset yang dapat dicairkan dalam waktu kurang dari 1 tahun.</div>
         </div>
         <div class="chat">
           <h3>LECTURER AI <span>BETA</span></h3>
-          <p class="user">jelaskan jurnal penyesuaian dengan contohnya dong</p>
-          <p class="bot">Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan akun agar saldo menunjukkan kondisi sebenarnya.</p>
-          <p class="bot">Contoh: beban gaji sudah terjadi tetapi belum dibayar, maka dicatat Beban Gaji pada sisi debit dan Utang Gaji pada sisi kredit.</p>
+          <div id="aiMessages" class="ai-messages">
+            <p class="bot">Halo! Tanyakan materi dari catatanmu. Contoh: jelaskan jurnal penyesuaian, aset lancar, atau siklus akuntansi.</p>
+          </div>
+          <div class="ai-input-row">
+            <input id="aiInput" placeholder="Ketik pertanyaan..." onkeydown="if(event.key==='Enter') askAI()" />
+            <button onclick="askAI()">Kirim</button>
+          </div>
         </div>
       </section>
 
       <section id="ekspor" class="panel export-section">
         <div>
           <h2>EKSPOR CATATAN</h2>
-          <button onclick="downloadCurrentNote()">Unduh Catatan Aktif (.txt)</button>
-          <button onclick="downloadRekap()">Unduh Rekap (.txt)</button>
-          <button onclick="window.print()">Cetak / Simpan sebagai PDF</button>
+          <p>Pilih materi yang mau diunduh:</p>
+          <div id="exportChoices" class="export-choices"></div>
+          <button onclick="downloadSelected('txt')">Unduh TXT</button>
+          <button onclick="downloadSelected('html')">Unduh HTML</button>
+          <button onclick="window.print()">Print / Simpan PDF</button>
         </div>
-        <div class="preview">
-          <h2>PREVIEW REKAP MATERI</h2>
-          <pre id="exportPreview">Belum ada rekap. Klik Generate Rekap dulu.</pre>
-        </div>
+        <div class="preview"><h2>PREVIEW</h2><div id="exportPreview"></div><button onclick="downloadSelected('txt')">Unduh Sekarang</button></div>
       </section>
     </main>
   </div>
