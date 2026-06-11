@@ -1,6 +1,7 @@
-const STORAGE_KEY = 'lecturerCompanionDataV3_PATCHED';
+const STORAGE_KEY = 'lecturerCompanionDataV4_FIXED_FLOW';
 let state = {
   activeNoteId: 1,
+  activeRekapNoteId: 1,
   notes: [
     {id:1, course:'Akuntansi Keuangan', title:'Pertemuan 1 - Persamaan Dasar Akuntansi', content:'Persamaan Dasar Akuntansi\n\n1. Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.\n2. Rumus persamaan dasar akuntansi adalah Aset = Liabilitas + Ekuitas. Contoh: Kas bertambah Rp10.000 maka aset naik.', favorite:true, updated:'2026-06-11'},
     {id:2, course:'Perpajakan', title:'PPh Pasal 23', content:'PPh Pasal 23 terutang pada akhir bulan pembayaran, disediakan untuk dibayar, atau jatuh tempo pembayaran. Penyetoran paling lambat tanggal 10 bulan berikutnya dan SPT Masa dilaporkan paling lambat tanggal 20 setelah masa pajak berakhir.', favorite:false, updated:'2026-06-10'},
@@ -20,7 +21,10 @@ function loadData(){
     try{ state = JSON.parse(saved); }catch(e){}
   }
   if(!Array.isArray(state.reviewNoteIds)) state.reviewNoteIds = [1,3].filter(id => state.notes.some(n => n.id === id));
+  if(!state.activeRekapNoteId || !state.notes.some(n => n.id == state.activeRekapNoteId)) state.activeRekapNoteId = state.notes[0]?.id || 1;
 }
+function rekapNote(){ return state.notes.find(n => n.id == state.activeRekapNoteId) || state.notes[0]; }
+
 function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function courses(){ return [...new Set(state.notes.map(n => n.course).filter(Boolean))]; }
 function activeNote(){ return state.notes.find(n => n.id == state.activeNoteId) || state.notes[0]; }
@@ -53,7 +57,7 @@ function logout(){
   document.getElementById('pageLoginInfo').innerHTML='Akun demo: <b>mahasiswa</b> | Password: <b>123456</b>';
 }
 
-function renderAll(){ renderNotes(); renderCourses(); renderRekapOptions(); renderSchedules(); renderProgress(); renderExportOptions(); }
+function renderAll(){ renderNotes(); renderCourses(); renderRekapOptions(); renderSchedules(); renderProgress(); renderExportOptions(); updateExportPreview(); }
 function renderNotes(){
   const q = (document.getElementById('noteSearchTop')?.value || '').toLowerCase();
   const picker = document.getElementById('notePicker');
@@ -86,7 +90,21 @@ function renderMeetings(){
   const course = document.getElementById('rekapCourse')?.value || courses()[0];
   const list = document.getElementById('meetingList');
   const notes = state.notes.filter(n=>n.course===course);
-  list.innerHTML = notes.map((n,i)=>`<p class="${n.id==state.activeNoteId?'active':''}">Pertemuan ${i+1}<br><span>${safeText(n.title.replace(/^Pertemuan\s*\d+\s*-\s*/i,''))}</span></p>`).join('') || '<p>Belum ada catatan.</p>';
+  if(notes.length && !notes.some(n => n.id == state.activeRekapNoteId)) state.activeRekapNoteId = notes[0].id;
+  list.innerHTML = notes.map((n,i)=>`<p onclick="selectRekapNote(${n.id})" class="${n.id==state.activeRekapNoteId?'active':''}">Pertemuan ${i+1}<br><span>${safeText(n.title.replace(/^Pertemuan\s*\d+\s*-\s*/i,''))}</span></p>`).join('') || '<p>Belum ada catatan.</p>';
+  renderRekapNote();
+}
+function selectRekapNote(id){
+  state.activeRekapNoteId = Number(id);
+  persist();
+  renderMeetings();
+}
+function changeRekapCourse(){
+  const course = document.getElementById('rekapCourse').value;
+  const first = state.notes.find(n => n.course === course);
+  if(first) state.activeRekapNoteId = first.id;
+  persist();
+  renderMeetings();
 }
 function renderSchedules(){
   const box = document.getElementById('scheduleList');
@@ -117,7 +135,7 @@ function renderExportOptions(){
   if(current && state.notes.some(n => String(n.id) === String(current))) select.value = current;
 }
 
-function selectNote(id){ state.activeNoteId = Number(id); renderNotes(); renderMeetings(); renderExportOptions(); }
+function selectNote(id){ state.activeNoteId = Number(id); renderNotes(); renderMeetings(); renderExportOptions(); updateExportPreview(); }
 function newNote(){
   const id = Date.now();
   state.notes.unshift({id, course:'Mata Kuliah Baru', title:'Catatan Baru', content:'Tulis materi kuliah di sini...', favorite:false, updated:new Date().toISOString().slice(0,10)});
@@ -140,6 +158,7 @@ function deleteNote(){
   state.notes = state.notes.filter(n => n.id != state.activeNoteId);
   state.reviewNoteIds = state.reviewNoteIds.filter(id => id != state.activeNoteId);
   state.activeNoteId = state.notes[0].id;
+  if(!state.activeRekapNoteId) state.activeRekapNoteId = id;
   persist(); renderAll();
 }
 function addReviewMaterial(){
@@ -165,60 +184,79 @@ function keywords(text){
   words.forEach(w=>freq[w]=(freq[w]||0)+1);
   return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([w])=>w);
 }
-function generateRekap(){
-  const course = document.getElementById('rekapCourse').value;
-  const notes = state.notes.filter(n=>n.course===course);
-  const combined = notes.map(n=>`${n.title}. ${n.content}`).join('\n');
-  const key = keywords(combined);
+function titleWithoutMeeting(n){ return (n?.title || '').replace(/^Pertemuan\s*\d+\s*-\s*/i,''); }
+function renderRekapNote(){
+  const n = rekapNote();
+  if(!n){ return; }
+  const title = titleWithoutMeeting(n) || n.title || 'Materi';
   let html = '';
   let text = '';
-  if(course === 'Akuntansi Keuangan'){
-    html = `<p class="inti"><b>Inti:</b> Akuntansi Keuangan mencakup persamaan dasar akuntansi dan siklus akuntansi sebagai dasar penyusunan laporan keuangan.</p>
+  if(n.title.toLowerCase().includes('persamaan dasar akuntansi')){
+    html = `<p class="inti"><b>Inti:</b> Persamaan dasar akuntansi menjelaskan hubungan antara aset, liabilitas, dan ekuitas.</p>
       <ol>
-        <li>Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.</li>
-        <li>Siklus akuntansi adalah tahapan pencatatan transaksi dari jurnal, buku besar, neraca saldo, penyesuaian, sampai laporan keuangan.</li>
+        <li>Persamaan dasar akuntansi menunjukkan hubungan antara harta perusahaan, kewajiban perusahaan, dan modal pemilik.</li>
+        <li>Rumus persamaan dasar akuntansi adalah Aset = Liabilitas + Ekuitas. Contoh: Kas bertambah Rp10.000 maka aset naik.</li>
       </ol>
-      <h4>KATA KUNCI</h4><p>#persamaan #aset #liabilitas #ekuitas #siklus #jurnal</p>`;
-    text = 'REKAP: Akuntansi Keuangan\n\nInti: Akuntansi Keuangan mencakup persamaan dasar akuntansi dan siklus akuntansi sebagai dasar penyusunan laporan keuangan.\n\nPoin penting:\n1. Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.\n2. Siklus akuntansi adalah tahapan pencatatan transaksi dari jurnal, buku besar, neraca saldo, penyesuaian, sampai laporan keuangan.\n\nKata kunci: persamaan, aset, liabilitas, ekuitas, siklus, jurnal';
+      <h4>KATA KUNCI</h4><p>#akuntansi #aset #liabilitas #ekuitas #kas</p>`;
+    text = `REKAP: ${title}\n\nInti: Persamaan dasar akuntansi menjelaskan hubungan antara aset, liabilitas, dan ekuitas.\n\n1. Persamaan dasar akuntansi menunjukkan hubungan antara harta perusahaan, kewajiban perusahaan, dan modal pemilik.\n2. Rumus persamaan dasar akuntansi adalah Aset = Liabilitas + Ekuitas. Contoh: Kas bertambah Rp10.000 maka aset naik.\n\nKata kunci: akuntansi, aset, liabilitas, ekuitas, kas`;
+  }else if(n.title.toLowerCase().includes('siklus akuntansi')){
+    html = `<p class="inti"><b>Inti:</b> Siklus akuntansi memastikan proses pencatatan sampai laporan keuangan berjalan runtut dan akurat.</p>
+      <ol>
+        <li>Transaksi adalah peristiwa ekonomi yang memengaruhi keuangan perusahaan.</li>
+        <li>Jurnal menjadi pencatatan pertama transaksi sebelum dipindahkan ke buku besar.</li>
+        <li>Buku besar mengelompokkan akun berdasarkan jenisnya.</li>
+        <li>Neraca saldo menyajikan daftar saldo akun sebelum penyesuaian.</li>
+        <li>Jurnal penyesuaian dibuat di akhir periode agar saldo akun sesuai kondisi sebenarnya.</li>
+      </ol>
+      <h4>KATA KUNCI</h4><p>#transaksi #jurnal #bukuBesar #neracaSaldo #penyesuaian</p>`;
+    text = `REKAP: ${title}\n\nInti: Siklus akuntansi memastikan proses pencatatan sampai laporan keuangan berjalan runtut dan akurat.\n\n1. Transaksi adalah peristiwa ekonomi yang memengaruhi keuangan perusahaan.\n2. Jurnal menjadi pencatatan pertama transaksi sebelum dipindahkan ke buku besar.\n3. Buku besar mengelompokkan akun berdasarkan jenisnya.\n4. Neraca saldo menyajikan daftar saldo akun sebelum penyesuaian.\n5. Jurnal penyesuaian dibuat di akhir periode agar saldo akun sesuai kondisi sebenarnya.\n\nKata kunci: transaksi, jurnal, buku besar, neraca saldo, penyesuaian`;
   }else{
-    const points = summarize(combined);
+    const points = summarize(n.content);
+    const key = keywords(n.content);
     html = `<p class="inti"><b>Inti:</b> ${safeText(points[0] || 'Belum ada isi catatan.')}</p><ol>${points.map(p=>`<li>${safeText(p)}</li>`).join('')}</ol><h4>KATA KUNCI</h4><p>${key.map(k=>'#'+safeText(k)).join(' ') || '-'}</p>`;
-    text = `REKAP: ${course}\n\nInti: ${points[0] || '-'}\n\nPoin penting:\n${points.map((p,i)=>`${i+1}. ${p}`).join('\n')}\n\nKata kunci: ${key.join(', ')}`;
+    text = `REKAP: ${title}\n\nInti: ${points[0] || '-'}\n\n${points.map((p,i)=>`${i+1}. ${p}`).join('\n')}\n\nKata kunci: ${key.join(', ')}`;
   }
-  document.getElementById('rekapTitle').textContent = 'REKAP: ' + course.toUpperCase();
+  document.getElementById('rekapTitle').textContent = 'REKAP: ' + title.toUpperCase();
   document.getElementById('rekapOutput').innerHTML = html;
   state.lastRekap = text;
-  document.getElementById('exportPreview').textContent = state.lastRekap;
+  document.getElementById('exportPreview').textContent = text;
   persist(); renderProgress();
 }
+function generateRekap(){ renderRekapNote(); }
 function searchMaterial(){
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const box = document.getElementById('searchResult');
   if(!q){ box.textContent = 'Masukkan kata kunci terlebih dahulu.'; return; }
-  const results = state.notes.filter(n => (n.title+n.course+n.content).toLowerCase().includes(q));
+  const terms = q.split(/\s+/).filter(Boolean);
+  const results = state.notes.filter(n => terms.some(t => (n.title+' '+n.course+' '+n.content).toLowerCase().includes(t)));
   if(!results.length){ box.innerHTML = 'Materi tidak ditemukan. Coba kata kunci lain.'; return; }
-  box.innerHTML = '<b>Hasil pencarian:</b>' + results.map(n=>`<div class="found"><b>${safeText(n.course)} - ${safeText(n.title)}</b><br>${safeText(n.content.slice(0,180))}...</div>`).join('');
+  box.innerHTML = `<b>Hasil pencarian (${results.length} materi):</b>` + results.map(n=>`<div class="found"><b>${safeText(n.course)} - ${safeText(n.title)}</b><br><div>${safeText(n.content).replace(/\n/g,'<br>')}</div></div>`).join('');
+}
+function bestNoteForQuestion(question){
+  const terms = question.toLowerCase().replace(/[^a-z0-9À-ÿ\s]/g,' ').split(/\s+/).filter(w => w.length > 3);
+  let scored = state.notes.map(n => {
+    const hay = (n.title+' '+n.course+' '+n.content).toLowerCase();
+    const score = terms.reduce((sum,t)=> sum + (hay.includes(t) ? 1 : 0), 0);
+    return {n, score};
+  }).sort((a,b)=>b.score-a.score);
+  return scored[0]?.score > 0 ? scored[0].n : null;
+}
+function answerFromNote(note, question){
+  const q = question.toLowerCase();
+  if(!note) return 'Aku belum menemukan materi itu di catatan. Coba pakai kata kunci yang ada di catatan, misalnya persamaan dasar akuntansi, siklus akuntansi, aset lancar, atau jurnal penyesuaian.';
+  if(q.includes('persamaan') || note.title.toLowerCase().includes('persamaan dasar akuntansi')) return 'Persamaan dasar akuntansi menjelaskan hubungan antara aset, liabilitas, dan ekuitas. Rumusnya adalah Aset = Liabilitas + Ekuitas. Contohnya, jika kas bertambah Rp10.000, maka aset perusahaan ikut naik.';
+  if(q.includes('siklus') || note.title.toLowerCase().includes('siklus akuntansi')) return 'Siklus akuntansi adalah urutan proses pencatatan transaksi sampai menjadi laporan keuangan. Urutannya meliputi transaksi, jurnal, buku besar, neraca saldo, jurnal penyesuaian, laporan keuangan, jurnal penutup, dan neraca saldo setelah penutupan.';
+  if(q.includes('jurnal penyesuaian')) return 'Jurnal penyesuaian dibuat pada akhir periode untuk menyesuaikan saldo akun agar sesuai dengan kondisi sebenarnya. Contohnya beban yang sudah terjadi tetapi belum dibayar perlu dicatat sebagai beban dan utang.';
+  if(q.includes('aset lancar')) return 'Aset lancar adalah aset yang dapat digunakan atau dicairkan dalam waktu kurang dari satu tahun, seperti kas, piutang, dan persediaan. Berbeda dengan aset tidak lancar yang manfaatnya lebih dari satu tahun.';
+  return `Aku menemukan materi terkait di ${note.course} - ${note.title}. Ringkasnya: ${summarize(note.content).join(' ')}`;
 }
 function askLecturerAI(){
   const input = document.getElementById('aiQuestion');
   const box = document.getElementById('aiMessages');
   const question = input.value.trim();
   if(!question) return;
-  const q = question.toLowerCase();
-  const matches = state.notes.filter(n => (n.title + ' ' + n.course + ' ' + n.content).toLowerCase().includes(q) || q.split(/\s+/).some(w => w.length > 4 && (n.title+n.content).toLowerCase().includes(w)));
-  let answer = '';
-  if(q.includes('jurnal penyesuaian')){
-    answer = 'Jurnal penyesuaian adalah jurnal yang dibuat pada akhir periode untuk menyesuaikan saldo akun agar mencerminkan kondisi sebenarnya. Contohnya, jika beban gaji sudah terjadi tetapi belum dibayar, maka dicatat Beban Gaji pada debit dan Utang Gaji pada kredit.';
-  }else if(q.includes('siklus akuntansi')){
-    answer = 'Siklus akuntansi adalah proses pencatatan transaksi sampai menjadi laporan keuangan. Tahap umumnya adalah transaksi, jurnal, buku besar, neraca saldo, jurnal penyesuaian, laporan keuangan, jurnal penutup, dan neraca saldo setelah penutupan.';
-  }else if(q.includes('aset lancar')){
-    answer = 'Aset lancar adalah aset yang diperkirakan dapat dicairkan atau digunakan dalam waktu kurang dari satu tahun, misalnya kas, piutang, dan persediaan. Aset tidak lancar digunakan lebih dari satu tahun, misalnya tanah, gedung, dan peralatan.';
-  }else if(matches.length){
-    const n = matches[0];
-    answer = `Aku menemukan materi terkait di ${n.course} - ${n.title}. Ringkasnya: ${summarize(n.content).join(' ')}`;
-  }else{
-    answer = 'Materi itu belum ditemukan di catatan. Coba gunakan kata kunci lain, misalnya aset lancar, siklus akuntansi, atau jurnal penyesuaian.';
-  }
+  const note = bestNoteForQuestion(question);
+  const answer = answerFromNote(note, question);
   box.innerHTML += `<p class="user">${safeText(question)}</p><p class="bot">${safeText(answer)}</p>`;
   input.value = '';
   box.scrollTop = box.scrollHeight;
@@ -245,13 +283,22 @@ function downloadCurrentNote(){
   const n = activeNote();
   downloadFile('catatan-' + (n.title || 'materi').replace(/\s+/g,'-').toLowerCase() + '.txt', `${n.course}\n${n.title}\n\n${n.content}`);
 }
+function selectedExportNote(){
+  const id = document.getElementById('exportNotePicker')?.value;
+  return state.notes.find(note => String(note.id) === String(id)) || activeNote();
+}
+function updateExportPreview(){
+  const n = selectedExportNote();
+  const preview = document.getElementById('exportPreview');
+  if(!preview || !n) return;
+  preview.textContent = `${n.course}\n${n.title}\n\n${n.content}`;
+}
 function downloadSelectedNote(){
-  const id = document.getElementById('exportNotePicker').value;
-  const n = state.notes.find(note => String(note.id) === String(id)) || activeNote();
+  const n = selectedExportNote();
   downloadFile('catatan-' + (n.title || 'materi').replace(/\s+/g,'-').toLowerCase() + '.txt', `${n.course}\n${n.title}\n\n${n.content}`);
 }
 function downloadRekap(){
-  if(!state.lastRekap) generateRekap();
+  renderRekapNote();
   downloadFile('rekap-materi.txt', state.lastRekap || 'Belum ada rekap.');
 }
 
@@ -260,3 +307,4 @@ window.addEventListener('keydown', function(e){
   if(e.key==='Enter' && document.activeElement?.id === 'aiQuestion') askLecturerAI();
 });
 loadData();
+

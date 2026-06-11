@@ -91,7 +91,7 @@
       <section id="rekap" class="panel rekap-section">
         <div class="section-title">
           <h2>REKAP MATERI</h2>
-          <select id="rekapCourse"></select>
+          <select id="rekapCourse" onchange="changeRekapCourse()"></select>
           <button onclick="generateRekap()">Generate Rekap</button>
         </div>
         <div class="rekap-content">
@@ -156,14 +156,14 @@
         <div>
           <h2>EKSPOR CATATAN</h2>
           <label class="export-label">Pilih materi yang mau diunduh</label>
-          <select id="exportNotePicker"></select>
+          <select id="exportNotePicker" onchange="updateExportPreview()"></select>
           <button onclick="downloadSelectedNote()">Unduh Materi Pilihan (.txt)</button>
           <button onclick="downloadRekap()">Unduh Rekap (.txt)</button>
           <button onclick="window.print()">Cetak / Simpan sebagai PDF</button>
         </div>
         <div class="preview">
           <h2>PREVIEW REKAP MATERI</h2>
-          <pre id="exportPreview">Belum ada rekap. Klik Generate Rekap dulu.</pre>
+          <pre id="exportPreview">Pilih materi untuk melihat preview.</pre>
         </div>
       </section>
     </main>
