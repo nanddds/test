@@ -10,14 +10,13 @@ let state = {
     {date:'2026-06-12', time:'08:00', title:'Review Akuntansi Keuangan'},
     {date:'2026-06-14', time:'10:00', title:'Latihan Perpajakan'}
   ],
-  lastRekap: '',
-  reviewDone: []
+  lastRekap: ''
 };
 
 function loadData(){
   const saved = localStorage.getItem(STORAGE_KEY);
   if(saved){
-    try{ state = JSON.parse(saved); if(!state.reviewDone) state.reviewDone = []; }catch(e){}
+    try{ state = JSON.parse(saved); }catch(e){}
   }
 }
 function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -51,7 +50,7 @@ function logout(){
   document.getElementById('pageLoginInfo').innerHTML='Akun demo: <b>mahasiswa</b> | Password: <b>123456</b>';
 }
 
-function renderAll(){ renderNotes(); renderCourses(); renderRekapOptions(); renderSchedules(); renderProgress(); renderExportOptions(); }
+function renderAll(){ renderNotes(); renderCourses(); renderRekapOptions(); renderSchedules(); renderProgress(); }
 function renderNotes(){
   const q = (document.getElementById('noteSearchTop')?.value || '').toLowerCase();
   const picker = document.getElementById('notePicker');
@@ -89,16 +88,8 @@ function renderSchedules(){
   const sorted = [...state.schedules].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   box.innerHTML = sorted.map((s,i)=>`<div class="schedule-item"><b>${s.date} ${s.time}</b><br>${s.title}<button onclick="removeSchedule('${s.date}','${s.time}','${s.title.replaceAll("'","&#39;")}')">Selesai</button></div>`).join('');
   const review = document.getElementById('reviewList');
-  const items = state.notes.filter(n => !(state.reviewDone || []).includes(n.id)).slice(-4).reverse();
-  review.innerHTML = items.length ? items.map(n=>`<label class="review-check"><input type="checkbox" onchange="markReviewed(${n.id})"> <span>${n.course} - ${n.title}<br><small>Terakhir diperbarui ${n.updated}</small></span></label>`).join('') : '<p>Semua materi sudah direview.</p>';
+  review.innerHTML = state.notes.slice(-3).reverse().map(n=>`<p>${n.course} - ${n.title}<br><span>Terakhir diperbarui ${n.updated}</span></p>`).join('');
 }
-function markReviewed(id){
-  if(!state.reviewDone) state.reviewDone = [];
-  if(!state.reviewDone.includes(id)) state.reviewDone.push(id);
-  persist();
-  renderSchedules();
-}
-
 function renderProgress(){
   const courseCount = courses().length;
   const percent = Math.min(100, Math.round((state.notes.length * 18) + (state.schedules.length * 5)));
@@ -143,57 +134,8 @@ function keywords(text){
   words.forEach(w=>freq[w]=(freq[w]||0)+1);
   return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([w])=>w);
 }
-function fixedRekap(course){
-  if(course === 'Akuntansi Keuangan'){
-    return {
-      title: 'REKAP: AKUNTANSI KEUANGAN',
-      html: `<p class="inti"><b>Inti:</b> Akuntansi Keuangan membantu mencatat transaksi secara sistematis sampai menjadi laporan keuangan.</p>
-        <h4>Pertemuan 1 - Persamaan Dasar Akuntansi</h4>
-        <ol>
-          <li>Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.</li>
-          <li>Rumus utamanya adalah Aset = Liabilitas + Ekuitas. Contoh, kas bertambah Rp10.000 maka aset naik.</li>
-        </ol>
-        <h4>Pertemuan 2 - Siklus Akuntansi</h4>
-        <ol>
-          <li>Transaksi adalah peristiwa ekonomi yang memengaruhi kondisi keuangan perusahaan.</li>
-          <li>Jurnal adalah pencatatan pertama transaksi ke dalam jurnal umum.</li>
-          <li>Buku besar digunakan untuk mengelompokkan akun berdasarkan jenisnya.</li>
-          <li>Neraca saldo berisi daftar saldo semua akun sebelum penyesuaian.</li>
-          <li>Jurnal penyesuaian dibuat di akhir periode agar saldo akun sesuai kondisi sebenarnya.</li>
-        </ol>
-        <h4>KATA KUNCI</h4>
-        <p>#aset #liabilitas #ekuitas #transaksi #jurnal #bukubesar #neracasaldo #penyesuaian</p>`,
-      text: `REKAP: AKUNTANSI KEUANGAN
-
-Inti: Akuntansi Keuangan membantu mencatat transaksi secara sistematis sampai menjadi laporan keuangan.
-
-Pertemuan 1 - Persamaan Dasar Akuntansi
-1. Persamaan dasar akuntansi menunjukkan hubungan antara aset, liabilitas, dan ekuitas.
-2. Rumus utamanya adalah Aset = Liabilitas + Ekuitas. Contoh, kas bertambah Rp10.000 maka aset naik.
-
-Pertemuan 2 - Siklus Akuntansi
-1. Transaksi adalah peristiwa ekonomi yang memengaruhi kondisi keuangan perusahaan.
-2. Jurnal adalah pencatatan pertama transaksi ke dalam jurnal umum.
-3. Buku besar digunakan untuk mengelompokkan akun berdasarkan jenisnya.
-4. Neraca saldo berisi daftar saldo semua akun sebelum penyesuaian.
-5. Jurnal penyesuaian dibuat di akhir periode agar saldo akun sesuai kondisi sebenarnya.
-
-Kata kunci: aset, liabilitas, ekuitas, transaksi, jurnal, buku besar, neraca saldo, penyesuaian`
-    };
-  }
-  return null;
-}
 function generateRekap(){
   const course = document.getElementById('rekapCourse').value;
-  const fixed = fixedRekap(course);
-  if(fixed){
-    document.getElementById('rekapTitle').textContent = fixed.title;
-    document.getElementById('rekapOutput').innerHTML = fixed.html;
-    state.lastRekap = fixed.text;
-    document.getElementById('exportPreview').textContent = state.lastRekap;
-    persist(); renderProgress();
-    return;
-  }
   const notes = state.notes.filter(n=>n.course===course);
   const combined = notes.map(n=>`${n.title}. ${n.content}`).join('\n');
   const points = summarize(combined);
@@ -213,37 +155,6 @@ function searchMaterial(){
   if(!results.length){ box.innerHTML = 'Materi tidak ditemukan. Coba kata kunci lain.'; return; }
   box.innerHTML = '<b>Hasil pencarian:</b>' + results.map(n=>`<div class="found"><b>${n.course} - ${n.title}</b><br>${n.content.slice(0,180)}...</div>`).join('');
 }
-function askLecturerAI(){
-  const input = document.getElementById('aiInput');
-  const answer = document.getElementById('aiAnswer');
-  const q = (input.value || '').trim().toLowerCase();
-  if(!q){
-    answer.innerHTML = '<p class="bot">Tulis pertanyaan materinya dulu.</p>';
-    return;
-  }
-  const matches = state.notes.filter(n => (n.title + ' ' + n.course + ' ' + n.content).toLowerCase().includes(q) || q.split(/\s+/).some(w => w.length > 4 && (n.content+n.title+n.course).toLowerCase().includes(w)));
-  if(!matches.length){
-    answer.innerHTML = `<p class="user">${input.value}</p><p class="bot">Materi itu belum ditemukan di catatan. Coba gunakan kata kunci lain atau tambahkan catatannya dulu.</p>`;
-    return;
-  }
-  const n = matches[0];
-  const summary = summarize(n.content).slice(0,2).join(' ');
-  answer.innerHTML = `<p class="user">${input.value}</p><p class="bot"><b>${n.course} - ${n.title}</b><br>${summary || n.content.slice(0,220)}</p>`;
-}
-
-function renderExportOptions(){
-  const select = document.getElementById('exportNotePicker');
-  if(!select) return;
-  select.innerHTML = state.notes.map(n => `<option value="${n.id}">${n.course} - ${n.title}</option>`).join('');
-  if(activeNote()) select.value = activeNote().id;
-}
-
-function downloadSelectedNote(){
-  const id = document.getElementById('exportNotePicker')?.value;
-  const n = state.notes.find(note => note.id == id) || activeNote();
-  downloadFile('catatan-' + (n.title || 'materi').replace(/\s+/g,'-').toLowerCase() + '.txt', `${n.course}\n${n.title}\n\n${n.content}`);
-}
-
 function addSchedule(){
   const date = document.getElementById('scheduleDate').value;
   const time = document.getElementById('scheduleTime').value;

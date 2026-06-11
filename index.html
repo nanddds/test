@@ -67,7 +67,7 @@
         <aside>
           <button class="add" onclick="newNote()">+ Catatan Baru</button>
           <p>📄 Semua Catatan <b id="noteCount">0</b></p>
-          <p>★ Favorit <b id="favCount">0</b></p>
+          <p>♡ Favorit <b id="favCount">0</b></p>
           <h4>MATA KULIAH</h4>
           <ul id="courseList"></ul>
           <button class="secondary" onclick="toggleFavorite()">Tandai Favorit</button>
@@ -138,22 +138,16 @@
         </div>
         <div class="chat">
           <h3>LECTURER AI <span>BETA</span></h3>
-          <p class="bot">Tanyakan materi dari catatanmu. AI ini menjawab berdasarkan data catatan lokal.</p>
-          <input id="aiInput" placeholder="Contoh: jelaskan jurnal penyesuaian" />
-          <button onclick="askLecturerAI()">Tanya AI</button>
-          <div id="aiAnswer" class="ai-answer">
-            <p class="user">jelaskan jurnal penyesuaian dengan contohnya dong</p>
-            <p class="bot">Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan akun agar saldo menunjukkan kondisi sebenarnya.</p>
-          </div>
+          <p class="user">jelaskan jurnal penyesuaian dengan contohnya dong</p>
+          <p class="bot">Jurnal penyesuaian adalah jurnal yang dibuat di akhir periode untuk menyesuaikan akun agar saldo menunjukkan kondisi sebenarnya.</p>
+          <p class="bot">Contoh: beban gaji sudah terjadi tetapi belum dibayar, maka dicatat Beban Gaji pada sisi debit dan Utang Gaji pada sisi kredit.</p>
         </div>
       </section>
 
       <section id="ekspor" class="panel export-section">
         <div>
           <h2>EKSPOR CATATAN</h2>
-          <label for="exportNotePicker"><b>Pilih materi yang ingin diunduh</b></label>
-          <select id="exportNotePicker"></select>
-          <button onclick="downloadSelectedNote()">Unduh Catatan Pilihan (.txt)</button>
+          <button onclick="downloadCurrentNote()">Unduh Catatan Aktif (.txt)</button>
           <button onclick="downloadRekap()">Unduh Rekap (.txt)</button>
           <button onclick="window.print()">Cetak / Simpan sebagai PDF</button>
         </div>
